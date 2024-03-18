@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/cakturk/go-netstat/netstat"
+	"log"
 )
 
 type Probes struct {
@@ -33,16 +34,17 @@ func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, e
 	}
 	for _, e := range socks {
 		var conn1 = ConnectionIdentifier{
-			Id:  1,
-			Pid: 1,
+			Id:  e.UID,
+			Pid: uint32(e.Process.Pid),
 			Tuple: ConnectionTuple{
 				DstIp:   binary.BigEndian.Uint32(e.RemoteAddr.IP),
 				SrcIp:   binary.BigEndian.Uint32(e.LocalAddr.IP),
 				DstPort: e.RemoteAddr.Port,
 				SrcPort: e.LocalAddr.Port,
 			},
-			Role: ServerConnectionRole,
+			Role: ClientConnectionRole,
 		}
+		log.Printf("Found link: %i p=%i %s:%i->%s:%i", conn1.Id, conn1.Pid, IP(conn1.Tuple.SrcIp).String(), conn1.Tuple.SrcIp, IP(conn1.Tuple.DstIp).String(), conn1.Tuple.DstPort)
 		conns[conn1] = activeThroughput
 	}
 
