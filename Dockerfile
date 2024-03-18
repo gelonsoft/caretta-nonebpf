@@ -7,7 +7,7 @@ ENV GOCACHE=/root/.cache/go-build
 RUN --mount=type=cache,target="/root/.cache/go-build" CGO_ENABLED=0 GOOS=linux go build -o bin/caretta cmd/caretta/caretta.go
 
 FROM alpine:3.19
-RUN apt-get update && apt-get install -y net-tools lsof
+RUN apk update && apk install -y net-tools lsof
 WORKDIR /app
 COPY --from=builder build/bin/caretta ./
 
