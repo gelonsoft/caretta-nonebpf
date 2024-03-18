@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/cakturk/go-netstat/netstat"
 	"log"
+	"net"
 )
 
 type Probes struct {
@@ -20,6 +21,10 @@ var inactiveThroughput = ConnectionThroughputStats{
 	BytesSent:     1,
 	BytesReceived: 1,
 	IsActive:      1,
+}
+var nullSockAddr = &netstat.SockAddr{
+	IP:   net.IPv4(0, 0, 0, 0),
+	Port: 0,
 }
 
 func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, error) {
@@ -37,12 +42,18 @@ func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, e
 	log.Printf("Probe done, found %d probes", len(socks))
 
 	for _, e := range socks {
+		if e.RemoteAddr == nil {
+			e.RemoteAddr = nullSockAddr
+		}
+		if e.LocalAddr == nil {
+			e.LocalAddr = nullSockAddr
+		}
 		var conn1 = ConnectionIdentifier{
 			Id:  e.UID,
 			Pid: uint32(e.Process.Pid),
 			Tuple: ConnectionTuple{
-				DstIp:   binary.BigEndian.Uint32(e.RemoteAddr.IP),
-				SrcIp:   binary.BigEndian.Uint32(e.LocalAddr.IP),
+				DstIp:   binary.LittleEndian.Uint32(e.RemoteAddr.IP),
+				SrcIp:   binary.LittleEndian.Uint32(e.LocalAddr.IP),
 				DstPort: e.RemoteAddr.Port,
 				SrcPort: e.LocalAddr.Port,
 			},
