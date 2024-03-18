@@ -28,10 +28,14 @@ func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, e
 
 	// TCP sockets
 	var socks []netstat.SockTabEntry
+	log.Printf("Started probe")
 	socks, err := netstat.TCPSocks(netstat.NoopFilter)
+
 	if err != nil {
 		return Probes{}, nil, fmt.Errorf("error query tcp socks - %v", err)
 	}
+	log.Printf("Probe done, found %i probes", len(socks))
+
 	for _, e := range socks {
 		var conn1 = ConnectionIdentifier{
 			Id:  e.UID,
