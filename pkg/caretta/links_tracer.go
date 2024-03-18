@@ -6,7 +6,6 @@ import (
 	"log"
 	"net"
 
-	"github.com/gelonsoft/caretta/pkg/k8s"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -39,12 +38,6 @@ var (
 	})
 )
 
-type IPResolver interface {
-	ResolveIP(string) k8s.Workload
-	StartWatching() error
-	StopWatching()
-}
-
 type MyProbes interface {
 	UnloadProbes() error
 }
@@ -56,7 +49,7 @@ type LinksTracer struct {
 }
 
 // NewTracer initializes a LinksTracer object
-func NewTracer(resolver *k8s.K8sIPResolver) LinksTracer {
+func NewTracer(resolver IPResolver) LinksTracer {
 	tracer := LinksTracer{resolver: resolver}
 	return tracer
 }

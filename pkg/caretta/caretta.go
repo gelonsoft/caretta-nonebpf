@@ -5,6 +5,7 @@ import (
 	"hash/fnv"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -42,14 +43,19 @@ func NewCaretta() *Caretta {
 
 func (caretta *Caretta) Start() {
 	caretta.metricsServer = metrics.StartMetricsServer(caretta.config.prometheusEndpoint, caretta.config.prometheusPort)
-
-	clientset, err := caretta.getClientSet()
-	if err != nil {
-		log.Fatalf("Error getting kubernetes clientset: %v", err)
-	}
-	resolver, err := caretta_k8s.NewK8sIPResolver(clientset, caretta.config.shouldResolveDns)
-	if err != nil {
-		log.Fatalf("Error creating resolver: %v", err)
+	var resolver IPResolver
+	var err error
+	if val := os.Getenv("USE_OS_RESOLVER"); val != "" {
+		resolver = &OSIPResolver{}
+	} else {
+		clientset, err := caretta.getClientSet()
+		if err != nil {
+			log.Fatalf("Error getting kubernetes clientset: %v", err)
+		}
+		resolver, err = caretta_k8s.NewK8sIPResolver(clientset, caretta.config.shouldResolveDns)
+		if err != nil {
+			log.Fatalf("Error creating resolver: %v", err)
+		}
 	}
 	err = resolver.StartWatching()
 	if err != nil {
