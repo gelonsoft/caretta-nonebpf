@@ -34,7 +34,7 @@ func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, e
 	if err != nil {
 		return Probes{}, nil, fmt.Errorf("error query tcp socks - %v", err)
 	}
-	log.Printf("Probe done, found %i probes", len(socks))
+	log.Printf("Probe done, found %d probes", len(socks))
 
 	for _, e := range socks {
 		var conn1 = ConnectionIdentifier{
@@ -48,7 +48,7 @@ func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, e
 			},
 			Role: ClientConnectionRole,
 		}
-		log.Printf("Found link: %i p=%i %s:%i->%s:%i", conn1.Id, conn1.Pid, IP(conn1.Tuple.SrcIp).String(), conn1.Tuple.SrcIp, IP(conn1.Tuple.DstIp).String(), conn1.Tuple.DstPort)
+		log.Printf("Found link: %d p=%d %s:%d->%s:%d", conn1.Id, conn1.Pid, IP(conn1.Tuple.SrcIp).String(), conn1.Tuple.SrcIp, IP(conn1.Tuple.DstIp).String(), conn1.Tuple.DstPort)
 		conns[conn1] = activeThroughput
 	}
 
