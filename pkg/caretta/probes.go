@@ -36,13 +36,13 @@ func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, e
 
 	// TCP sockets
 	var socks []netstat.SockTabEntry
-	log.Printf("Started probe")
+	//log.Printf("Started probe")
 	socks, err := netstat.TCPSocks(netstat.NoopFilter)
 
 	if err != nil {
 		return Probes{}, nil, fmt.Errorf("error query tcp socks - %v", err)
 	}
-	log.Printf("Probe done, found %d probes", len(socks))
+	log.Printf("Probe done, found %d links", len(socks))
 
 	for _, e := range socks {
 		if e.RemoteAddr == nil {
@@ -65,7 +65,7 @@ func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, e
 			},
 			Role: ClientConnectionRole,
 		}
-		log.Printf("Found link: %d p=%d %s:%d->%s:%d", conn1.Id, conn1.Pid, IP(conn1.Tuple.SrcIp).String(), conn1.Tuple.SrcIp, IP(conn1.Tuple.DstIp).String(), conn1.Tuple.DstPort)
+		//log.Printf("Found link: %d p=%d %s:%d->%s:%d", conn1.Id, conn1.Pid, IP(conn1.Tuple.SrcIp).String(), conn1.Tuple.SrcIp, IP(conn1.Tuple.DstIp).String(), conn1.Tuple.DstPort)
 		conns[conn1] = activeThroughput
 	}
 

@@ -1,21 +1,26 @@
-<div align="center">
-  <h1>Caretta</h1>
-  <p align="center">
+<div >
+  <h1>Modified Caretta non-ebpf agent</h1>
+  <p >
     <img src="images/logo.svg" width="25%" alt="caretta" title="caretta" />
    <br><br>
-   <a href="https://www.producthunt.com/posts/caretta?utm_source=badge-top-post-topic-badge&utm_medium=badge&utm_souce=badge-caretta" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-topic-badge.svg?post_id=373791&theme=neutral&period=weekly&topic_id=267" alt="Caretta - Instant&#0032;K8s&#0032;service&#0032;dependency&#0032;map&#0044;&#0032;right&#0032;to&#0032;your&#0032;Grafana | Product Hunt" width="25%"/></a>
+   
   </p>
+<h2>Original Caretta agent made by <a href="https://www.groundcover.com">groundcover</a>, sources are here <a href="https://github.com/groundcover-com/caretta">github repo</a></h2>
+
+  </div>
+
+## Modifications to original caretta
+* Removed EBPF probes. Now it uses standard OS netstat interface (windows and linux), so you can run Caretta on pre-4.19 linux kernels and even on windows machines 
+* Optionally you can switch off k8s ip resolver by add env var USE_OS_RESOLVER=somevalue, so you can run caretta agent on VM or on bare metal servers
+
+<div>
     <h2>Instant K8s service dependency map, right to your Grafana.</h2>
     <h4> made by <a href="https://www.groundcover.com">groundcover</h4>
-  <p>
-
-[![slack](https://img.shields.io/badge/slack-groundcover-yellowgreen.svg?logo=slack)](http://www.groundcover.com/join-slack)
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 <br>
 
 </div>
 
-<p align="center">
+<p >
     <img src="images/caretta.gif" width="90%" alt="caretta-screenshot" title="caretta-screenshot">
 </p>
 
