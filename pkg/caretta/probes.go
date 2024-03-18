@@ -26,6 +26,9 @@ var nullSockAddr = &netstat.SockAddr{
 	IP:   net.IPv4(0, 0, 0, 0),
 	Port: 0,
 }
+var nullPid = &netstat.Process{
+	Pid: -1,
+}
 
 func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, error) {
 
@@ -47,6 +50,9 @@ func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, e
 		}
 		if e.LocalAddr == nil {
 			e.LocalAddr = nullSockAddr
+		}
+		if e.Process == nil {
+			e.Process = nullPid
 		}
 		var conn1 = ConnectionIdentifier{
 			Id:  e.UID,
