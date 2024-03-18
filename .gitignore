@@ -16,6 +16,9 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+bin/
+vendor/
 
 # Go workspace file
 go.work
+.idea/
