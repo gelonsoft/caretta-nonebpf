@@ -3,7 +3,8 @@ WORKDIR /build
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . /build/
-RUN CGO_ENABLED=0 GOOS=linux go build -o bin/caretta cmd/caretta/caretta.go
+ENV GOCACHE=/root/.cache/go-build
+RUN --mount=type=cache,target="/root/.cache/go-build" CGO_ENABLED=0 GOOS=linux go build -o bin/caretta cmd/caretta/caretta.go
 
 FROM alpine:3.19
 
