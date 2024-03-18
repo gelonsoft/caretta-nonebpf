@@ -1,13 +1,11 @@
-FROM quay.io/cilium/ebpf-builder:1648566014 AS builder
-ARG TARGETARCH
-ARG TARGETPLATFORM
-RUN echo "Building for $TARGETARCH"
-RUN echo "Building for $TARGETPLATFORM"
+FROM golang:1.21
 WORKDIR /build
+COPY go.mod go.sum ./
+RUN go mod download
 COPY . /build/
-RUN make build ARCH=$TARGETARCH
+RUN CGO_ENABLED=0 GOOS=linux go build -o bin/caretta cmd/caretta/caretta.go
 
-FROM alpine:3.17
+FROM alpine:3.19
 
 WORKDIR /app
 COPY --from=builder build/bin/caretta ./
