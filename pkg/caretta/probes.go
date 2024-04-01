@@ -45,12 +45,39 @@ func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, e
 	}
 	log.Printf("Probe done, found %d links", len(socks))
 
-	var localIPs = []netstat.SockAddr{}
+	var localIPs = []net.IP{}
+
+	ifaces, err := net.Interfaces()
+	// handle err
+	for _, i := range ifaces {
+		addrs, _ := i.Addrs()
+		// handle err
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			localIPs = append(localIPs, ip)
+		}
+	}
+
+	var localListens = []netstat.SockAddr{}
 
 	for _, e := range socks {
 		if e.LocalAddr != nil && e.State.String() == "LISTEN" {
-			log.Printf("Add listen IP & port " + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)))
-			localIPs = append(localIPs, *e.LocalAddr)
+
+			if e.LocalAddr.IP.Equal(nullSockAddr.IP) {
+				for _, localIP := range localIPs {
+					localListens = append(localListens, netstat.SockAddr{IP: localIP, Port: e.LocalAddr.Port})
+					log.Printf("Add listen #1 IP & port " + localIP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)))
+				}
+			} else {
+				localListens = append(localListens, *e.LocalAddr)
+				log.Printf("Add listen #2 IP & port " + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)))
+			}
 		}
 	}
 
@@ -68,7 +95,7 @@ func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, e
 			e.Process = nullPid
 		}
 		var connRole = ClientConnectionRole
-		for _, localIpPort := range localIPs {
+		for _, localIpPort := range localListens {
 			if (localIpPort.Port == e.LocalAddr.Port && localIpPort.IP.Equal(e.LocalAddr.IP)) || (localIpPort.Port == e.RemoteAddr.Port && localIpPort.IP.Equal(e.RemoteAddr.IP)) {
 				connRole = ServerConnectionRole
 			}
