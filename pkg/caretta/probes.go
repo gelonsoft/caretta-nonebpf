@@ -6,7 +6,6 @@ import (
 	"github.com/cakturk/go-netstat/netstat"
 	"log"
 	"net"
-	"strconv"
 )
 
 type Probes struct {
@@ -49,12 +48,15 @@ func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, e
 
 	for _, e := range socks {
 		if e.LocalAddr != nil && e.State.String() == "LISTEN" {
-			log.Printf("Add listen IP & port " + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)))
+			//log.Printf("Add listen IP & port " + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)))
 			localIPs = append(localIPs, *e.LocalAddr)
 		}
 	}
 
 	for _, e := range socks {
+		if e.State.String() == "LISTEN" {
+			continue
+		}
 		if e.RemoteAddr == nil {
 			e.RemoteAddr = nullSockAddr
 		}
@@ -66,8 +68,8 @@ func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, e
 		}
 		var connRole = ClientConnectionRole
 		for _, localIpPort := range localIPs {
-			if localIpPort.Port == localIpPort.Port && localIpPort.IP.Equal(e.LocalAddr.IP) {
-				log.Printf("Connection is local " + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)) + "->" + e.RemoteAddr.IP.String() + ":" + strconv.Itoa(int(e.RemoteAddr.Port)))
+			if localIpPort.Port == e.LocalAddr.Port && localIpPort.IP.Equal(e.LocalAddr.IP) {
+				//log.Printf("Connection is local " + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)) + "->" + e.RemoteAddr.IP.String() + ":" + strconv.Itoa(int(e.RemoteAddr.Port)))
 				connRole = ServerConnectionRole
 			}
 		}
