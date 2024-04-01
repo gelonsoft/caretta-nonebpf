@@ -95,23 +95,44 @@ func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, e
 			e.Process = nullPid
 		}
 		var connRole = ClientConnectionRole
+		var changeSourceAndTarget = false
 		for _, localIpPort := range localListens {
-			if (localIpPort.Port == e.LocalAddr.Port && localIpPort.IP.Equal(e.LocalAddr.IP)) || (localIpPort.Port == e.RemoteAddr.Port && localIpPort.IP.Equal(e.RemoteAddr.IP)) {
+			var sourceListens = localIpPort.Port == e.LocalAddr.Port && localIpPort.IP.Equal(e.LocalAddr.IP)
+			var targetListens = localIpPort.Port == e.RemoteAddr.Port && localIpPort.IP.Equal(e.RemoteAddr.IP)
+			if sourceListens || targetListens {
 				connRole = ServerConnectionRole
+				if !targetListens && sourceListens {
+					changeSourceAndTarget = true
+				}
 			}
 		}
 		log.Printf("Connection role=" + strconv.Itoa(connRole) + " for " + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)) + "->" + e.RemoteAddr.IP.String() + ":" + strconv.Itoa(int(e.RemoteAddr.Port)))
 
-		var conn1 = ConnectionIdentifier{
-			Id:  e.UID,
-			Pid: uint32(e.Process.Pid),
-			Tuple: ConnectionTuple{
-				DstIp:   binary.LittleEndian.Uint32(e.RemoteAddr.IP),
-				SrcIp:   binary.LittleEndian.Uint32(e.LocalAddr.IP),
-				DstPort: e.RemoteAddr.Port,
-				SrcPort: e.LocalAddr.Port,
-			},
-			Role: uint32(connRole),
+		var conn1 ConnectionIdentifier
+		if changeSourceAndTarget {
+			conn1 = ConnectionIdentifier{
+				Id:  e.UID,
+				Pid: uint32(e.Process.Pid),
+				Tuple: ConnectionTuple{
+					DstIp:   binary.LittleEndian.Uint32(e.LocalAddr.IP),
+					SrcIp:   binary.LittleEndian.Uint32(e.RemoteAddr.IP),
+					DstPort: e.LocalAddr.Port,
+					SrcPort: e.RemoteAddr.Port,
+				},
+				Role: uint32(connRole),
+			}
+		} else {
+			conn1 = ConnectionIdentifier{
+				Id:  e.UID,
+				Pid: uint32(e.Process.Pid),
+				Tuple: ConnectionTuple{
+					DstIp:   binary.LittleEndian.Uint32(e.RemoteAddr.IP),
+					SrcIp:   binary.LittleEndian.Uint32(e.LocalAddr.IP),
+					DstPort: e.RemoteAddr.Port,
+					SrcPort: e.LocalAddr.Port,
+				},
+				Role: uint32(connRole),
+			}
 		}
 		//log.Printf("Found link: %d p=%d %s:%d->%s:%d", conn1.Id, conn1.Pid, IP(conn1.Tuple.SrcIp).String(), conn1.Tuple.SrcIp, IP(conn1.Tuple.DstIp).String(), conn1.Tuple.DstPort)
 		conns[conn1] = activeThroughput
