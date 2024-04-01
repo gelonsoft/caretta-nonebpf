@@ -106,7 +106,6 @@ func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, e
 				}
 			}
 		}
-		log.Printf("Connection role=" + strconv.Itoa(connRole) + " for " + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)) + "->" + e.RemoteAddr.IP.String() + ":" + strconv.Itoa(int(e.RemoteAddr.Port)))
 
 		var conn1 ConnectionIdentifier
 		if changeSourceAndTarget {
@@ -121,6 +120,7 @@ func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, e
 				},
 				Role: uint32(connRole),
 			}
+			log.Printf("Connection #1 role=" + strconv.Itoa(connRole) + " for " + e.RemoteAddr.IP.String() + ":" + strconv.Itoa(int(e.RemoteAddr.Port)) + "->" + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)))
 		} else {
 			conn1 = ConnectionIdentifier{
 				Id:  e.UID,
@@ -133,6 +133,7 @@ func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, e
 				},
 				Role: uint32(connRole),
 			}
+			log.Printf("Connection #2 role=" + strconv.Itoa(connRole) + " for " + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)) + "->" + e.RemoteAddr.IP.String() + ":" + strconv.Itoa(int(e.RemoteAddr.Port)))
 		}
 		//log.Printf("Found link: %d p=%d %s:%d->%s:%d", conn1.Id, conn1.Pid, IP(conn1.Tuple.SrcIp).String(), conn1.Tuple.SrcIp, IP(conn1.Tuple.DstIp).String(), conn1.Tuple.DstPort)
 		conns[conn1] = activeThroughput
