@@ -44,6 +44,14 @@ func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, e
 	}
 	log.Printf("Probe done, found %d links", len(socks))
 
+	var localIPs = []netstat.SockAddr{}
+
+	for _, e := range socks {
+		if e.LocalAddr != nil && e.State.String() == "LISTEN" {
+			localIPs = append(localIPs, *e.LocalAddr)
+		}
+	}
+
 	for _, e := range socks {
 		if e.RemoteAddr == nil {
 			e.RemoteAddr = nullSockAddr
@@ -54,6 +62,13 @@ func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, e
 		if e.Process == nil {
 			e.Process = nullPid
 		}
+		var connRole = ClientConnectionRole
+		for _, localIpPort := range localIPs {
+			if localIpPort.Port == localIpPort.Port && localIpPort.IP.Equal(e.LocalAddr.IP) {
+				connRole = ServerConnectionRole
+			}
+		}
+
 		var conn1 = ConnectionIdentifier{
 			Id:  e.UID,
 			Pid: uint32(e.Process.Pid),
@@ -63,7 +78,7 @@ func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, e
 				DstPort: e.RemoteAddr.Port,
 				SrcPort: e.LocalAddr.Port,
 			},
-			Role: ClientConnectionRole,
+			Role: uint32(connRole),
 		}
 		//log.Printf("Found link: %d p=%d %s:%d->%s:%d", conn1.Id, conn1.Pid, IP(conn1.Tuple.SrcIp).String(), conn1.Tuple.SrcIp, IP(conn1.Tuple.DstIp).String(), conn1.Tuple.DstPort)
 		conns[conn1] = activeThroughput
