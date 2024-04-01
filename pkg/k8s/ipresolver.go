@@ -605,6 +605,8 @@ func (resolver *K8sIPResolver) updateIpMapping() {
 		for _, clusterIp := range service.Spec.ClusterIPs {
 			if clusterIp != "None" {
 				resolver.storeWorkloadsIP(clusterIp, &workload)
+			} else {
+				log.Printf("updateIpMapping.Services warning: clusterIp=None for workload kind=" + workload.Kind + ",ns=" + workload.Namespace + ",name=" + workload.Name)
 			}
 		}
 		return true
@@ -649,10 +651,12 @@ func (resolver *K8sIPResolver) storeWorkloadsIP(ip string, newWorkload *Workload
 		existingWorkload, ok := val.(Workload)
 		if ok {
 			if existingWorkload.Kind == "node" && newWorkload.Kind != "node" {
+				log.Printf("storeWorkloadsIP warning: ignored workload update for ip=" + ip + " cause existingWorkload.kind=node and newWorkload.kind=" + newWorkload.Kind + "!=node")
 				return
 			}
 		}
 	}
+	log.Printf("storeWorkloadsIP debug: store ip=" + ip + ",kind=" + newWorkload.Kind + ",ns=" + newWorkload.Namespace + ",name=" + newWorkload.Name)
 	resolver.ipsMap.Store(ip, *newWorkload)
 }
 
