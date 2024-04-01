@@ -23,6 +23,8 @@ func (ip IP) String() string {
 
 // "final" type of link, like an edge on the graph
 type NetworkLink struct {
+	ClientIP   string
+	ServerIP   string
 	Client     caretta_k8s.Workload
 	Server     caretta_k8s.Workload
 	ServerPort uint16

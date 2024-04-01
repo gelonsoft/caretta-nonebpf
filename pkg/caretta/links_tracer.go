@@ -173,11 +173,15 @@ func (tracer *LinksTracer) reduceConnectionToLink(connection ConnectionIdentifie
 
 	if connection.Role == ClientConnectionRole {
 		// Src is Client, Dst is Server, Port is DstPort
+		link.ClientIP = IP(connection.Tuple.SrcIp).String()
+		link.ServerIP = IP(connection.Tuple.DstIp).String()
 		link.Client = srcWorkload
 		link.Server = dstWorkload
 		link.ServerPort = connection.Tuple.DstPort
 	} else if connection.Role == ServerConnectionRole {
 		// Dst is Client, Src is Server, Port is SrcPort
+		link.ClientIP = IP(connection.Tuple.DstIp).String()
+		link.ServerIP = IP(connection.Tuple.SrcIp).String()
 		link.Client = dstWorkload
 		link.Server = srcWorkload
 		link.ServerPort = connection.Tuple.SrcPort
