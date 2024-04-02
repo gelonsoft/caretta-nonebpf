@@ -159,8 +159,9 @@ func parseSocktab(r io.Reader, accept AcceptFn) ([]SockTabEntry, error) {
 		if err != nil {
 			return nil, err
 		}
-		e.UID = uint32(u)
-		e.ino = fields[9]
+		//e.UID = uint32(u)
+		//e.ino = fields[9]
+		e.Role = 1
 		if accept(&e) {
 			tab = append(tab, e)
 		}
@@ -192,7 +193,7 @@ func getProcName(s []byte) string {
 	return string(s[i+1 : j])
 }
 
-func (p *procFd) iterFdDir() {
+/*func (p *procFd) iterFdDir() {
 	// link name is of the form socket:[5860846]
 	fddir := path.Join(p.base, "/fd")
 	fi, err := os.ReadDir(fddir)
@@ -228,12 +229,12 @@ func (p *procFd) iterFdDir() {
 				name := getProcName(z[1])
 				p.p = &Process{p.pid, name}
 			}
-			sk.Process = p.p
+			//sk.Process = p.p
 		}
 	}
-}
+}*/
 
-func extractProcInfo(sktab []SockTabEntry) {
+/*func extractProcInfo(sktab []SockTabEntry) {
 	const basedir = "/proc"
 	fi, err := os.ReadDir(basedir)
 	if err != nil {
@@ -249,27 +250,33 @@ func extractProcInfo(sktab []SockTabEntry) {
 			continue
 		}
 		base := path.Join(basedir, file.Name())
-		proc := procFd{base: base, pid: pid, sktab: sktab}
-		proc.iterFdDir()
+		//proc := procFd{base: base, pid: pid, sktab: sktab}
+		//proc.iterFdDir()
 	}
-}
+}*/
 
 // doNetstat - collect information about network port status
-func doNetstat(path string, fn AcceptFn) ([]SockTabEntry, error) {
+func doNetstat(path string, fn AcceptFn) ([]SockHostEntry, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
 	tabs, err := parseSocktab(f, fn)
-	f.Close()
+	if err != nil {
+
+	}
+	err = f.Close()
 	if err != nil {
 		return nil, err
 	}
-	extractProcInfo(tabs)
-	return tabs, nil
+	ips, err := osGetIPsInterfaceOnly()
+	if err != nil {
+		return nil, err
+	}
+	return []SockHostEntry{SockHostEntry{sockTab: tabs, ipList: ips}}, nil
 }
 
-func doSubNetstat(subpath string, fn AcceptFn) ([]SockTabEntry, error) {
+func doSubNetstat(subpath string, fn AcceptFn) ([]SockHostEntry, error) {
 	const basedir = "/proc"
 	fi, err := os.ReadDir(basedir)
 	if err != nil {
@@ -277,14 +284,14 @@ func doSubNetstat(subpath string, fn AcceptFn) ([]SockTabEntry, error) {
 	}
 
 	var inodes = make([]uint64, 0)
-
-	var resultTab = make([]SockTabEntry, 0)
+	var result = make([]SockHostEntry, 0)
 
 	for _, file := range fi {
 		if !file.IsDir() {
 			continue
 		}
-		tabPath := path.Join(basedir, file.Name(), subpath)
+		basePath := path.Join(basedir, file.Name())
+		tabPath := path.Join(basePath, subpath)
 		var stat unix.Stat_t
 		err = unix.Stat(tabPath, &stat)
 		if err != nil {
@@ -303,19 +310,24 @@ func doSubNetstat(subpath string, fn AcceptFn) ([]SockTabEntry, error) {
 		if err != nil {
 			continue
 		}
-		resultTab = append(resultTab, tabs...)
 		err = f.Close()
 		if err != nil {
 			continue
 		}
+
+		ips, err := getSubPathIPs(basePath)
+		if err != nil {
+			continue
+		}
+		result = append(result, SockHostEntry{sockTab: tabs, ipList: ips})
 	}
-	extractProcInfo(resultTab)
-	return resultTab, nil
+	//extractProcInfo(resultTab)
+	return result, nil
 }
 
 // TCPSocks returns a slice of active TCP sockets containing only those
 // elements that satisfy the accept function
-func osTCPSocks(accept AcceptFn) ([]SockTabEntry, error) {
+func osTCPSocks(accept AcceptFn) ([]SockHostEntry, error) {
 	if useProcessesTab {
 		return doSubNetstat(pathProcessTCPTab, accept)
 	} else {
@@ -325,7 +337,7 @@ func osTCPSocks(accept AcceptFn) ([]SockTabEntry, error) {
 
 // TCP6Socks returns a slice of active TCP IPv4 sockets containing only those
 // elements that satisfy the accept function
-func osTCP6Socks(accept AcceptFn) ([]SockTabEntry, error) {
+func osTCP6Socks(accept AcceptFn) ([]SockHostEntry, error) {
 	if useProcessesTab {
 		return doSubNetstat(pathProcessTCP6Tab, accept)
 	} else {
@@ -335,7 +347,7 @@ func osTCP6Socks(accept AcceptFn) ([]SockTabEntry, error) {
 
 // UDPSocks returns a slice of active UDP sockets containing only those
 // elements that satisfy the accept function
-func osUDPSocks(accept AcceptFn) ([]SockTabEntry, error) {
+func osUDPSocks(accept AcceptFn) ([]SockHostEntry, error) {
 	if useProcessesTab {
 		return doSubNetstat(pathProcessUDPTab, accept)
 	} else {
@@ -345,7 +357,7 @@ func osUDPSocks(accept AcceptFn) ([]SockTabEntry, error) {
 
 // UDP6Socks returns a slice of active UDP IPv6 sockets containing only those
 // elements that satisfy the accept function
-func osUDP6Socks(accept AcceptFn) ([]SockTabEntry, error) {
+func osUDP6Socks(accept AcceptFn) ([]SockHostEntry, error) {
 	if useProcessesTab {
 		return doSubNetstat(pathProcessUDP6Tab, accept)
 	} else {
@@ -395,6 +407,36 @@ func readLines(path string) ([]string, error) {
 		lines = append(lines, scanner.Text())
 	}
 	return lines, scanner.Err()
+}
+
+func getSubPathIPs(basedir string) ([]net.IP, error) {
+	const subpath = "net/fib_trie"
+	lines, err := readLines(path.Join(basedir, subpath))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]net.IP, 0)
+
+	var dupMap = make(map[string]bool)
+
+	for i, line := range lines {
+		if strings.Contains(line, "/32 host") && i > 0 {
+			split := strings.Split(lines[i-1], "|-- ")
+			if len(split) == 2 {
+				ip := split[1]
+				dupMap[ip] = true
+			}
+		}
+	}
+
+	for ip := range dupMap {
+		netIP := net.ParseIP(ip)
+		if netIP != nil {
+			result = append(result, netIP)
+		}
+	}
+
+	return result, nil
 }
 
 func osGetSubProcessIPs() (map[string]bool, error) {

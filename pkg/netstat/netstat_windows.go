@@ -477,11 +477,12 @@ func toSockTabEntry(ws winSockEnt, snp ProcessSnapshot) SockTabEntry {
 		LocalAddr:  ws.LocalSock(),
 		RemoteAddr: ws.RemoteSock(),
 		State:      ws.SockState(),
-		Process:    ws.Process(snp),
+		Role:       1,
+		//Process:    ws.Process(snp),
 	}
 }
 
-func osTCPSocks(accept AcceptFn) ([]SockTabEntry, error) {
+func osTCPSocks(accept AcceptFn) ([]SockHostEntry, error) {
 	tbl, err := GetTCPTable2(true)
 	if err != nil {
 		return nil, err
@@ -499,10 +500,14 @@ func osTCPSocks(accept AcceptFn) ([]SockTabEntry, error) {
 		}
 	}
 	snp.Close()
-	return sktab, nil
+	ips, err := osGetIPsInterfaceOnly()
+	if err != nil {
+		return nil, err
+	}
+	return []SockHostEntry{SockHostEntry{sockTab: sktab, ipList: ips}}, nil
 }
 
-func osTCP6Socks(accept AcceptFn) ([]SockTabEntry, error) {
+func osTCP6Socks(accept AcceptFn) ([]SockHostEntry, error) {
 	tbl, err := GetTCP6Table2(true)
 	if err != nil {
 		return nil, err
@@ -520,10 +525,14 @@ func osTCP6Socks(accept AcceptFn) ([]SockTabEntry, error) {
 		}
 	}
 	snp.Close()
-	return sktab, nil
+	ips, err := osGetIPsInterfaceOnly()
+	if err != nil {
+		return nil, err
+	}
+	return []SockHostEntry{SockHostEntry{sockTab: sktab, ipList: ips}}, nil
 }
 
-func osUDPSocks(accept AcceptFn) ([]SockTabEntry, error) {
+func osUDPSocks(accept AcceptFn) ([]SockHostEntry, error) {
 	tbl, err := GetUDPTableOwnerPID(true)
 	if err != nil {
 		return nil, err
@@ -541,10 +550,14 @@ func osUDPSocks(accept AcceptFn) ([]SockTabEntry, error) {
 		}
 	}
 	snp.Close()
-	return sktab, nil
+	ips, err := osGetIPsInterfaceOnly()
+	if err != nil {
+		return nil, err
+	}
+	return []SockHostEntry{SockHostEntry{sockTab: sktab, ipList: ips}}, nil
 }
 
-func osUDP6Socks(accept AcceptFn) ([]SockTabEntry, error) {
+func osUDP6Socks(accept AcceptFn) ([]SockHostEntry, error) {
 	tbl, err := GetUDP6TableOwnerPID(true)
 	if err != nil {
 		return nil, err
@@ -562,10 +575,15 @@ func osUDP6Socks(accept AcceptFn) ([]SockTabEntry, error) {
 		}
 	}
 	snp.Close()
-	return sktab, nil
+
+	ips, err := osGetIPsInterfaceOnly()
+	if err != nil {
+		return nil, err
+	}
+	return []SockHostEntry{SockHostEntry{sockTab: sktab, ipList: ips}}, nil
 }
 
-func osGetIPs() ([]net.IP, error) {
+func osGetIPsInterfaceOnly() ([]net.IP, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
 		return nil, err

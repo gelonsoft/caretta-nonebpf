@@ -11,18 +11,26 @@ type SockAddr struct {
 	Port uint16
 }
 
+var nullSockAddr = SockAddr{
+	IP:   net.IPv4(0, 0, 0, 0),
+	Port: 0,
+}
+
 func (s *SockAddr) String() string {
 	return fmt.Sprintf("%v:%d", s.IP, s.Port)
 }
 
 // SockTabEntry type represents each line of the /proc/net/[tcp|udp]
 type SockTabEntry struct {
-	ino        string
+	//ino        string
 	LocalAddr  *SockAddr
 	RemoteAddr *SockAddr
 	State      SkState
-	UID        uint32
-	Process    *Process
+	Role       int
+}
+type SockHostEntry struct {
+	sockTab []SockTabEntry
+	ipList  []net.IP
 }
 
 // Process holds the PID and process name to which each socket belongs
@@ -49,30 +57,85 @@ type AcceptFn func(*SockTabEntry) bool
 // NoopFilter - a test function returning true for all elements
 func NoopFilter(*SockTabEntry) bool { return true }
 
+func calcRoles(entries []SockHostEntry) ([]SockTabEntry, error) {
+	result := make([]SockTabEntry, 0)
+	for _, hostEntry := range entries {
+		var localIPs = hostEntry.ipList
+
+		var localListens = make([]SockAddr, 0)
+
+		for _, e := range hostEntry.sockTab {
+			if e.LocalAddr != nil && e.State.String() == "LISTEN" {
+
+				if e.LocalAddr.IP.Equal(nullSockAddr.IP) {
+					for _, localIP := range localIPs {
+						localListens = append(localListens, SockAddr{IP: localIP, Port: e.LocalAddr.Port})
+					}
+				} else {
+					localListens = append(localListens, *e.LocalAddr)
+				}
+			}
+		}
+
+		for _, e := range hostEntry.sockTab {
+			if e.State.String() == "LISTEN" {
+				continue
+			}
+			for _, localIpPort := range localListens {
+				var sourceListens = localIpPort.Port == e.LocalAddr.Port && localIpPort.IP.Equal(e.LocalAddr.IP)
+				var targetListens = localIpPort.Port == e.RemoteAddr.Port && localIpPort.IP.Equal(e.RemoteAddr.IP)
+				if sourceListens || targetListens {
+					if !targetListens && sourceListens {
+						tempAddr := e.LocalAddr
+						e.LocalAddr = e.RemoteAddr
+						e.RemoteAddr = tempAddr
+						e.Role = 2
+					}
+				}
+			}
+			result = append(result, e)
+		}
+	}
+
+	return result, nil
+}
+
 // TCPSocks returns a slice of active TCP sockets containing only those
 // elements that satisfy the accept function
 func TCPSocks(accept AcceptFn) ([]SockTabEntry, error) {
-	return osTCPSocks(accept)
+	hostEntries, err := osTCPSocks(accept)
+	if err != nil {
+		return nil, nil
+	}
+	return calcRoles(hostEntries)
 }
 
 // TCP6Socks returns a slice of active TCP IPv4 sockets containing only those
 // elements that satisfy the accept function
 func TCP6Socks(accept AcceptFn) ([]SockTabEntry, error) {
-	return osTCP6Socks(accept)
+	hostEntries, err := osTCP6Socks(accept)
+	if err != nil {
+		return nil, nil
+	}
+	return calcRoles(hostEntries)
 }
 
 // UDPSocks returns a slice of active UDP sockets containing only those
 // elements that satisfy the accept function
 func UDPSocks(accept AcceptFn) ([]SockTabEntry, error) {
-	return osUDPSocks(accept)
+	hostEntries, err := osUDPSocks(accept)
+	if err != nil {
+		return nil, nil
+	}
+	return calcRoles(hostEntries)
 }
 
 // UDP6Socks returns a slice of active UDP IPv6 sockets containing only those
 // elements that satisfy the accept function
 func UDP6Socks(accept AcceptFn) ([]SockTabEntry, error) {
-	return osUDP6Socks(accept)
-}
-
-func GetIPs() ([]net.IP, error) {
-	return osGetIPs()
+	hostEntries, err := osUDP6Socks(accept)
+	if err != nil {
+		return nil, nil
+	}
+	return calcRoles(hostEntries)
 }
