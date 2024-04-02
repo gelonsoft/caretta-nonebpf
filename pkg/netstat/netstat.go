@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"strconv"
 )
 
 // SockAddr represents an ip:port pair
@@ -71,11 +70,11 @@ func calcRoles(entries []SockHostEntry) ([]SockTabEntry, error) {
 				if e.LocalAddr.IP.Equal(nullSockAddr.IP) {
 					for _, localIP := range localIPs {
 						localListens = append(localListens, SockAddr{IP: localIP, Port: e.LocalAddr.Port})
-						log.Printf("Append listen #1 entry " + localIP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)))
+						//log.Printf("Append listen #1 entry " + localIP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)))
 					}
 				} else {
 					localListens = append(localListens, *e.LocalAddr)
-					log.Printf("Append listen #2 entry " + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)))
+					//log.Printf("Append listen #2 entry " + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)))
 				}
 			}
 		}
@@ -91,17 +90,17 @@ func calcRoles(entries []SockHostEntry) ([]SockTabEntry, error) {
 				if isSrcListens || isDstListens {
 					e.Role = 2
 					if isDstListens && !isSrcListens {
-						log.Printf("Before swap role=" + strconv.Itoa(e.Role) + " for " + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)) + "->" + e.RemoteAddr.IP.String() + ":" + strconv.Itoa(int(e.RemoteAddr.Port)) + " cause listens " + localIpPort.IP.String() + ":" + strconv.Itoa(int(localIpPort.Port)))
+						//log.Printf("Before swap role=" + strconv.Itoa(e.Role) + " for " + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)) + "->" + e.RemoteAddr.IP.String() + ":" + strconv.Itoa(int(e.RemoteAddr.Port)) + " cause listens " + localIpPort.IP.String() + ":" + strconv.Itoa(int(localIpPort.Port)))
 						tempAddr := e.LocalAddr
 						e.LocalAddr = e.RemoteAddr
 						e.RemoteAddr = tempAddr
-						log.Printf("After swap entry role=" + strconv.Itoa(e.Role) + " for " + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)) + "->" + e.RemoteAddr.IP.String() + ":" + strconv.Itoa(int(e.RemoteAddr.Port)) + " cause listens " + localIpPort.IP.String() + ":" + strconv.Itoa(int(localIpPort.Port)))
+						//log.Printf("After swap entry role=" + strconv.Itoa(e.Role) + " for " + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)) + "->" + e.RemoteAddr.IP.String() + ":" + strconv.Itoa(int(e.RemoteAddr.Port)) + " cause listens " + localIpPort.IP.String() + ":" + strconv.Itoa(int(localIpPort.Port)))
 					} else {
-						log.Printf("Changed role=" + strconv.Itoa(e.Role) + " for " + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)) + "->" + e.RemoteAddr.IP.String() + ":" + strconv.Itoa(int(e.RemoteAddr.Port)) + " cause listens " + localIpPort.IP.String() + ":" + strconv.Itoa(int(localIpPort.Port)))
+						//log.Printf("Changed role=" + strconv.Itoa(e.Role) + " for " + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)) + "->" + e.RemoteAddr.IP.String() + ":" + strconv.Itoa(int(e.RemoteAddr.Port)) + " cause listens " + localIpPort.IP.String() + ":" + strconv.Itoa(int(localIpPort.Port)))
 					}
 				}
 			}
-			log.Printf("Done connection role=" + strconv.Itoa(e.Role) + " for " + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)) + "->" + e.RemoteAddr.IP.String() + ":" + strconv.Itoa(int(e.RemoteAddr.Port)))
+			//log.Printf("Done connection role=" + strconv.Itoa(e.Role) + " for " + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)) + "->" + e.RemoteAddr.IP.String() + ":" + strconv.Itoa(int(e.RemoteAddr.Port)))
 			result = append(result, *e)
 		}
 	}
