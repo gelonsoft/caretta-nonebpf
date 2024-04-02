@@ -10,7 +10,6 @@ import (
 	"fmt"
 	unix "golang.org/x/sys/unix"
 	"io"
-	"io/ioutil"
 	"net"
 	"os"
 	"path"
@@ -196,7 +195,7 @@ func getProcName(s []byte) string {
 func (p *procFd) iterFdDir() {
 	// link name is of the form socket:[5860846]
 	fddir := path.Join(p.base, "/fd")
-	fi, err := ioutil.ReadDir(fddir)
+	fi, err := os.ReadDir(fddir)
 	if err != nil {
 		return
 	}
@@ -236,7 +235,7 @@ func (p *procFd) iterFdDir() {
 
 func extractProcInfo(sktab []SockTabEntry) {
 	const basedir = "/proc"
-	fi, err := ioutil.ReadDir(basedir)
+	fi, err := os.ReadDir(basedir)
 	if err != nil {
 		return
 	}
@@ -272,7 +271,7 @@ func doNetstat(path string, fn AcceptFn) ([]SockTabEntry, error) {
 
 func doSubNetstat(subpath string, fn AcceptFn) ([]SockTabEntry, error) {
 	const basedir = "/proc"
-	fi, err := ioutil.ReadDir(basedir)
+	fi, err := os.ReadDir(basedir)
 	if err != nil {
 		return nil, nil
 	}
@@ -351,5 +350,120 @@ func osUDP6Socks(accept AcceptFn) ([]SockTabEntry, error) {
 		return doSubNetstat(pathProcessUDP6Tab, accept)
 	} else {
 		return doNetstat(pathUDP6Tab, accept)
+	}
+}
+
+func osGetIPsInterfaceOnly() ([]net.IP, error) {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return nil, err
+	}
+	ipMap := make(map[string]bool)
+	// handle err
+	for _, i := range ifaces {
+		addrs, _ := i.Addrs()
+		// handle err
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			ipMap[ip.String()] = true
+		}
+	}
+	var uniqueIPs []net.IP
+	for IP := range ipMap {
+		uniqueIPs = append(uniqueIPs, net.IP(IP))
+	}
+
+	return uniqueIPs, nil
+}
+
+func readLines(path string) ([]string, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var lines []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	return lines, scanner.Err()
+}
+
+func osGetSubProcessIPs() (map[string]bool, error) {
+	const basedir = "/proc"
+	const subpath = "net/fib_trie"
+	fi, err := os.ReadDir(basedir)
+	if err != nil {
+		return nil, err
+	}
+
+	var inodes = make([]uint64, 0)
+
+	var result = make(map[string]bool)
+
+	for _, file := range fi {
+		if !file.IsDir() {
+			continue
+		}
+		tabPath := path.Join(basedir, file.Name(), subpath)
+		var stat unix.Stat_t
+		err = unix.Stat(tabPath, &stat)
+		if err != nil {
+			continue
+		}
+		if slices.Contains(inodes, stat.Ino) {
+			continue
+		}
+		inodes = append(inodes, stat.Ino)
+
+		lines, err := readLines(tabPath)
+		if err != nil {
+			continue
+		}
+
+		for i, line := range lines {
+			if strings.Contains(line, "/32 host") && i > 0 {
+				split := strings.Split(lines[i-1], "|-- ")
+				if len(split) == 2 {
+					ip := split[1]
+					result[ip] = true
+				}
+			}
+		}
+	}
+	return result, nil
+}
+
+func osGetIPs() ([]net.IP, error) {
+	if useProcessesTab {
+		resultMap := make([]net.IP, 0)
+		interfaceIPs, err := osGetIPsInterfaceOnly()
+		if err != nil {
+			return interfaceIPs, err
+		}
+		subProcessIPsMap, err := osGetSubProcessIPs()
+		if err != nil {
+			return interfaceIPs, err
+		}
+		for _, ip := range interfaceIPs {
+			subProcessIPsMap[ip.String()] = true
+		}
+		for ip := range subProcessIPsMap {
+			netIP := net.ParseIP(ip)
+			if netIP != nil {
+				resultMap = append(resultMap, netIP)
+			}
+		}
+		return resultMap, nil
+	} else {
+		return osGetIPsInterfaceOnly()
 	}
 }

@@ -564,3 +564,32 @@ func osUDP6Socks(accept AcceptFn) ([]SockTabEntry, error) {
 	snp.Close()
 	return sktab, nil
 }
+
+func osGetIPs() ([]net.IP, error) {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return nil, err
+	}
+	ipMap := make(map[string]bool)
+	// handle err
+	for _, i := range ifaces {
+		addrs, _ := i.Addrs()
+		// handle err
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			ipMap[ip.String()] = true
+		}
+	}
+	var uniqueIPs []net.IP
+	for IP := range ipMap {
+		uniqueIPs = append(uniqueIPs, net.IP(IP))
+	}
+
+	return uniqueIPs, nil
+}

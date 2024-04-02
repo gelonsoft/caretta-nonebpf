@@ -44,26 +44,9 @@ func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, e
 	}
 	log.Printf("Probe done, found %d links", len(socks))
 
-	var localIPs = []net.IP{}
+	var localIPs, _ = netstat.GetIPs()
 
-	ifaces, err := net.Interfaces()
-	// handle err
-	for _, i := range ifaces {
-		addrs, _ := i.Addrs()
-		// handle err
-		for _, addr := range addrs {
-			var ip net.IP
-			switch v := addr.(type) {
-			case *net.IPNet:
-				ip = v.IP
-			case *net.IPAddr:
-				ip = v.IP
-			}
-			localIPs = append(localIPs, ip)
-		}
-	}
-
-	var localListens = []netstat.SockAddr{}
+	var localListens = make([]netstat.SockAddr, 0)
 
 	for _, e := range socks {
 		if e.LocalAddr != nil && e.State.String() == "LISTEN" {

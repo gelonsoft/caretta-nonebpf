@@ -72,3 +72,7 @@ func UDPSocks(accept AcceptFn) ([]SockTabEntry, error) {
 func UDP6Socks(accept AcceptFn) ([]SockTabEntry, error) {
 	return osUDP6Socks(accept)
 }
+
+func GetIPs() ([]net.IP, error) {
+	return osGetIPs()
+}
