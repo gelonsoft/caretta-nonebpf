@@ -90,7 +90,7 @@ func calcRoles(entries []SockHostEntry) ([]SockTabEntry, error) {
 				var isDstListens = localIpPort.Port == e.RemoteAddr.Port && localIpPort.IP.Equal(e.RemoteAddr.IP)
 				if isSrcListens || isDstListens {
 					e.Role = 2
-					if !isDstListens && isSrcListens {
+					if isDstListens && !isSrcListens {
 						log.Printf("Before swap role=" + strconv.Itoa(e.Role) + " for " + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)) + "->" + e.RemoteAddr.IP.String() + ":" + strconv.Itoa(int(e.RemoteAddr.Port)) + " cause listens " + localIpPort.IP.String() + ":" + strconv.Itoa(int(localIpPort.Port)))
 						tempAddr := e.LocalAddr
 						e.LocalAddr = e.RemoteAddr
