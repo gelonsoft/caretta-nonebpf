@@ -2,7 +2,9 @@ package netstat
 
 import (
 	"fmt"
+	"log"
 	"net"
+	"strconv"
 )
 
 // SockAddr represents an ip:port pair
@@ -60,19 +62,20 @@ func NoopFilter(*SockTabEntry) bool { return true }
 func calcRoles(entries []SockHostEntry) ([]SockTabEntry, error) {
 	result := make([]SockTabEntry, 0)
 	for _, hostEntry := range entries {
+		log.Printf("Start host entry")
 		var localIPs = hostEntry.ipList
-
 		var localListens = make([]SockAddr, 0)
 
 		for _, e := range hostEntry.sockTab {
 			if e.LocalAddr != nil && e.State.String() == "LISTEN" {
-
 				if e.LocalAddr.IP.Equal(nullSockAddr.IP) {
 					for _, localIP := range localIPs {
 						localListens = append(localListens, SockAddr{IP: localIP, Port: e.LocalAddr.Port})
+						log.Printf("Append listen #1 entry " + localIP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)))
 					}
 				} else {
 					localListens = append(localListens, *e.LocalAddr)
+					log.Printf("Append listen #2 entry " + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)))
 				}
 			}
 		}
@@ -85,14 +88,18 @@ func calcRoles(entries []SockHostEntry) ([]SockTabEntry, error) {
 				var sourceListens = localIpPort.Port == e.LocalAddr.Port && localIpPort.IP.Equal(e.LocalAddr.IP)
 				var targetListens = localIpPort.Port == e.RemoteAddr.Port && localIpPort.IP.Equal(e.RemoteAddr.IP)
 				if sourceListens || targetListens {
+					e.Role = 2
 					if !targetListens && sourceListens {
 						tempAddr := e.LocalAddr
 						e.LocalAddr = e.RemoteAddr
 						e.RemoteAddr = tempAddr
-						e.Role = 2
+						log.Printf("Swapped entry role=" + strconv.Itoa(e.Role) + " for " + e.RemoteAddr.IP.String() + ":" + strconv.Itoa(int(e.RemoteAddr.Port)) + "->" + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)))
+					} else {
+						log.Printf("Changed role=" + strconv.Itoa(e.Role) + " for " + e.RemoteAddr.IP.String() + ":" + strconv.Itoa(int(e.RemoteAddr.Port)) + "->" + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)))
 					}
 				}
 			}
+			log.Printf("Done connection role=" + strconv.Itoa(e.Role) + " for " + e.RemoteAddr.IP.String() + ":" + strconv.Itoa(int(e.RemoteAddr.Port)) + "->" + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)))
 			result = append(result, e)
 		}
 	}
