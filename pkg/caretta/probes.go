@@ -3,7 +3,7 @@ package caretta
 import (
 	"encoding/binary"
 	"fmt"
-	"github.com/cakturk/go-netstat/netstat"
+	"github.com/gelonsoft/caretta/pkg/netstat"
 	"log"
 	"net"
 )
