@@ -99,7 +99,12 @@ func calcRoles(entries []SockHostEntry) ([]SockTabEntry, error) {
 			if e.State.String() == "LISTEN" {
 				continue
 			}
-			e.LocalAddr.IP = net.ParseIP("::")
+			if e.LocalAddr.IP.String() == "::" {
+				e.LocalAddr.IP = nullSockAddr.IP
+			}
+			if e.RemoteAddr.IP.String() == "::" {
+				e.RemoteAddr.IP = nullSockAddr.IP
+			}
 			for _, localIpPort := range localListens {
 				ipv4Addr := e.LocalAddr.IP.To4()
 				if ipv4Addr != nil {
