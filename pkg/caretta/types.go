@@ -28,6 +28,7 @@ type NetworkLink struct {
 	Client     caretta_k8s.Workload
 	Server     caretta_k8s.Workload
 	ServerPort uint16
+	ClientPort uint16
 	Role       uint32
 	LinkType   uint32
 }

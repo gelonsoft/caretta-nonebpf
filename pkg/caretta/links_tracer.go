@@ -179,6 +179,7 @@ func (tracer *LinksTracer) reduceConnectionToLink(connection ConnectionIdentifie
 		link.Client = srcWorkload
 		link.Server = dstWorkload
 		link.ServerPort = connection.Tuple.DstPort
+		link.ClientPort = connection.Tuple.SrcPort
 	} else if connection.Role == ServerConnectionRole {
 		// Dst is Client, Src is Server, Port is SrcPort
 		link.ClientIP = IP(connection.Tuple.DstIp).String()
@@ -187,6 +188,7 @@ func (tracer *LinksTracer) reduceConnectionToLink(connection ConnectionIdentifie
 		link.Client = dstWorkload
 		link.Server = srcWorkload
 		link.ServerPort = connection.Tuple.SrcPort
+		link.ClientPort = connection.Tuple.DstPort
 	} else {
 		return NetworkLink{}, errors.New("connection's role is unknown")
 	}
