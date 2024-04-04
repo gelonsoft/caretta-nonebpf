@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"strconv"
 )
 
 // SockAddr represents an ip:port pair
@@ -82,6 +81,9 @@ func calcRoles(entries []SockHostEntry) ([]SockTabEntry, error) {
 				if ipv4Addr != nil {
 					e.LocalAddr.IP = ipv4Addr
 				}
+				if e.LocalAddr.String() == "::" {
+					e.LocalAddr.IP = nullSockAddr.IP
+				}
 				if e.LocalAddr.IP.Equal(nullSockAddr.IP) {
 					for _, localIP := range localIPs {
 						localListens = append(localListens, SockAddr{IP: localIP, Port: e.LocalAddr.Port})
@@ -99,21 +101,15 @@ func calcRoles(entries []SockHostEntry) ([]SockTabEntry, error) {
 			if e.State.String() == "LISTEN" {
 				continue
 			}
-			if e.LocalAddr.IP.String() == "::" {
-				e.LocalAddr.IP = nullSockAddr.IP
+			ipv4Addr := e.LocalAddr.IP.To4()
+			if ipv4Addr != nil {
+				e.LocalAddr.IP = ipv4Addr
 			}
-			if e.RemoteAddr.IP.String() == "::" {
-				e.RemoteAddr.IP = nullSockAddr.IP
+			ipv4Addr = e.RemoteAddr.IP.To4()
+			if ipv4Addr != nil {
+				e.RemoteAddr.IP = ipv4Addr
 			}
 			for _, localIpPort := range localListens {
-				ipv4Addr := e.LocalAddr.IP.To4()
-				if ipv4Addr != nil {
-					e.LocalAddr.IP = ipv4Addr
-				}
-				ipv4Addr = e.RemoteAddr.IP.To4()
-				if ipv4Addr != nil {
-					e.RemoteAddr.IP = ipv4Addr
-				}
 				var isSrcListens = localIpPort.Port == e.LocalAddr.Port && localIpPort.IP.Equal(e.LocalAddr.IP)
 				var isDstListens = localIpPort.Port == e.RemoteAddr.Port && localIpPort.IP.Equal(e.RemoteAddr.IP)
 				if isSrcListens || isDstListens {
@@ -128,9 +124,9 @@ func calcRoles(entries []SockHostEntry) ([]SockTabEntry, error) {
 						//log.Printf("Changed role=" + strconv.Itoa(e.Role) + " for " + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)) + "->" + e.RemoteAddr.IP.String() + ":" + strconv.Itoa(int(e.RemoteAddr.Port)) + " cause listens " + localIpPort.IP.String() + ":" + strconv.Itoa(int(localIpPort.Port)))
 					}
 				} else {
-					if localIpPort.Port == e.LocalAddr.Port || localIpPort.Port == e.RemoteAddr.Port {
+					/*if localIpPort.Port == e.LocalAddr.Port || localIpPort.Port == e.RemoteAddr.Port {
 						log.Printf("Debug compare for L=" + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)) + " and R=" + e.RemoteAddr.IP.String() + ":" + strconv.Itoa(int(e.RemoteAddr.Port)) + " <> listens " + localIpPort.IP.String() + ":" + strconv.Itoa(int(localIpPort.Port)))
-					}
+					}*/
 				}
 			}
 			//log.Printf("Done connection role=" + strconv.Itoa(e.Role) + " for " + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)) + "->" + e.RemoteAddr.IP.String() + ":" + strconv.Itoa(int(e.RemoteAddr.Port)))
