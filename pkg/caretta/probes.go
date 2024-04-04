@@ -6,7 +6,6 @@ import (
 	"github.com/gelonsoft/caretta/pkg/netstat"
 	"log"
 	"net"
-	"strconv"
 )
 
 type Probes struct {
@@ -76,7 +75,7 @@ func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, e
 			Role:     uint32(e.Role),
 			LinkType: 1,
 		}] = activeThroughput
-		log.Printf("ConnectionIdentifier create " + e.RemoteAddr.IP.String() + "<-" + e.LocalAddr.IP.String() + " = " + strconv.Itoa(int(binary.LittleEndian.Uint32(e.RemoteAddr.IP.To4()))) + "<-" + strconv.Itoa(int(binary.LittleEndian.Uint32(e.LocalAddr.IP.To4()))))
+		//log.Printf("ConnectionIdentifier create " + e.RemoteAddr.IP.String() + "<-" + e.LocalAddr.IP.String() + " = " + strconv.Itoa(int(binary.LittleEndian.Uint32(e.RemoteAddr.IP.To4()))) + "<-" + strconv.Itoa(int(binary.LittleEndian.Uint32(e.LocalAddr.IP.To4()))))
 	}
 
 	return Probes{}, conns, nil
