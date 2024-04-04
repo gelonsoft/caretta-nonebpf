@@ -11,7 +11,8 @@
 
 ## Modifications to original caretta
 * Removed EBPF probes. Now it uses standard OS netstat interface (windows and linux), so you can run Caretta on pre-4.19 linux kernels and even on windows machines 
-* Optionally you can switch off k8s ip resolver by add env var USE_OS_RESOLVER=somevalue, so you can run caretta agent on VM or on bare metal servers
+* Optionally you can switch off k8s ip resolver by add env var USE_OS_RESOLVER=any-non-empty-value, so you can run caretta agent on VM or on bare metal servers
+* Optionally you can turn on scanning of all /proc/<PID>/net/tcp{,6} by set USE_ALL_PROC=any-non-empty-value. It's useful in case of k8s or docker installation 
 
 <div>
     <h2>Instant K8s service dependency map, right to your Grafana.</h2>
