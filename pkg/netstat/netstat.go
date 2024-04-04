@@ -81,7 +81,7 @@ func calcRoles(entries []SockHostEntry) ([]SockTabEntry, error) {
 				if ipv4Addr != nil {
 					e.LocalAddr.IP = ipv4Addr
 				}
-				if e.LocalAddr.String() == "::" {
+				if e.LocalAddr.IP.String() == "::" {
 					e.LocalAddr.IP = nullSockAddr.IP
 				}
 				if e.LocalAddr.IP.Equal(nullSockAddr.IP) {
