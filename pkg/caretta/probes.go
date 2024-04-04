@@ -65,16 +65,27 @@ func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, e
 	log.Printf("Probe done, found %d tcp6 links", len(socks))
 
 	for _, e := range socks {
-		conns[ConnectionIdentifier{
-			Tuple: ConnectionTuple{
-				DstIp:   binary.LittleEndian.Uint32(e.RemoteAddr.IP.To4()),
-				SrcIp:   binary.LittleEndian.Uint32(e.LocalAddr.IP.To4()),
-				DstPort: e.RemoteAddr.Port,
-				SrcPort: e.LocalAddr.Port,
-			},
-			Role:     uint32(e.Role),
-			LinkType: 1,
-		}] = activeThroughput
+		remoteIP := e.RemoteAddr.IP.To4()
+		localIP := e.LocalAddr.IP.To4()
+		if remoteIP == nil || localIP == nil {
+			if remoteIP == nil {
+				log.Printf("Bad convert in connectionIdentifier create v6 remote " + e.RemoteAddr.IP.String() + "(!)<-" + e.LocalAddr.IP.String())
+			}
+			if localIP == nil {
+				log.Printf("Bad convert in connectionIdentifier create v6 local " + e.RemoteAddr.IP.String() + "<-" + e.LocalAddr.IP.String() + "(!)")
+			}
+		} else {
+			conns[ConnectionIdentifier{
+				Tuple: ConnectionTuple{
+					DstIp:   binary.LittleEndian.Uint32(e.RemoteAddr.IP.To4()),
+					SrcIp:   binary.LittleEndian.Uint32(e.LocalAddr.IP.To4()),
+					DstPort: e.RemoteAddr.Port,
+					SrcPort: e.LocalAddr.Port,
+				},
+				Role:     uint32(e.Role),
+				LinkType: 1,
+			}] = activeThroughput
+		}
 		//log.Printf("ConnectionIdentifier create " + e.RemoteAddr.IP.String() + "<-" + e.LocalAddr.IP.String() + " = " + strconv.Itoa(int(binary.LittleEndian.Uint32(e.RemoteAddr.IP.To4()))) + "<-" + strconv.Itoa(int(binary.LittleEndian.Uint32(e.LocalAddr.IP.To4()))))
 	}
 
