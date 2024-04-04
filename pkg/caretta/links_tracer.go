@@ -175,6 +175,7 @@ func (tracer *LinksTracer) reduceConnectionToLink(connection ConnectionIdentifie
 		// Src is Client, Dst is Server, Port is DstPort
 		link.ClientIP = IP(connection.Tuple.SrcIp).String()
 		link.ServerIP = IP(connection.Tuple.DstIp).String()
+		link.LinkType = connection.LinkType
 		link.Client = srcWorkload
 		link.Server = dstWorkload
 		link.ServerPort = connection.Tuple.DstPort
@@ -182,6 +183,7 @@ func (tracer *LinksTracer) reduceConnectionToLink(connection ConnectionIdentifie
 		// Dst is Client, Src is Server, Port is SrcPort
 		link.ClientIP = IP(connection.Tuple.DstIp).String()
 		link.ServerIP = IP(connection.Tuple.SrcIp).String()
+		link.LinkType = connection.LinkType
 		link.Client = dstWorkload
 		link.Server = srcWorkload
 		link.ServerPort = connection.Tuple.SrcPort

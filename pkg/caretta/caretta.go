@@ -25,7 +25,7 @@ var (
 	}, []string{
 		"link_id", "client_id", "client_name", "client_namespace", "client_kind",
 		"server_id", "server_name", "server_namespace", "server_kind", "server_port", "role",
-		"client_ip", "server_ip",
+		"client_ip", "server_ip", "link_type",
 	})
 )
 
@@ -128,6 +128,7 @@ func (caretta *Caretta) handleLink(link *NetworkLink, throughput uint64) {
 		"role":             strconv.Itoa(int(link.Role)),
 		"client_ip":        link.ClientIP,
 		"server_ip":        link.ServerIP,
+		"link_type":        strconv.Itoa(int(link.LinkType)),
 	}).Set(float64(throughput))
 }
 

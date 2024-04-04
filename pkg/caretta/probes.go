@@ -52,7 +52,8 @@ func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, e
 				DstPort: e.RemoteAddr.Port,
 				SrcPort: e.LocalAddr.Port,
 			},
-			Role: uint32(e.Role),
+			Role:     uint32(e.Role),
+			LinkType: 0,
 		}] = activeThroughput
 	}
 
@@ -71,7 +72,8 @@ func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, e
 				DstPort: e.RemoteAddr.Port,
 				SrcPort: e.LocalAddr.Port,
 			},
-			Role: uint32(e.Role),
+			Role:     uint32(e.Role),
+			LinkType: 1,
 		}] = activeThroughput
 	}
 

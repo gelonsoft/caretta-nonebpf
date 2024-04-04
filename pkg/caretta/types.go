@@ -29,6 +29,7 @@ type NetworkLink struct {
 	Server     caretta_k8s.Workload
 	ServerPort uint16
 	Role       uint32
+	LinkType   uint32
 }
 
 type ConnectionTuple struct {
@@ -39,10 +40,11 @@ type ConnectionTuple struct {
 }
 
 type ConnectionIdentifier struct {
-	Id    uint32
-	Pid   uint32
-	Tuple ConnectionTuple
-	Role  uint32
+	Id       uint32
+	Pid      uint32
+	Tuple    ConnectionTuple
+	Role     uint32
+	LinkType uint32
 }
 
 type ConnectionThroughputStats struct {
