@@ -68,15 +68,15 @@ func LoadProbes() (Probes, map[ConnectionIdentifier]ConnectionThroughputStats, e
 	for _, e := range socks {
 		conns[ConnectionIdentifier{
 			Tuple: ConnectionTuple{
-				DstIp:   binary.LittleEndian.Uint32(e.RemoteAddr.IP),
-				SrcIp:   binary.LittleEndian.Uint32(e.LocalAddr.IP),
+				DstIp:   binary.LittleEndian.Uint32(e.RemoteAddr.IP.To4()),
+				SrcIp:   binary.LittleEndian.Uint32(e.LocalAddr.IP.To4()),
 				DstPort: e.RemoteAddr.Port,
 				SrcPort: e.LocalAddr.Port,
 			},
 			Role:     uint32(e.Role),
 			LinkType: 1,
 		}] = activeThroughput
-		log.Printf("ConnectionIdentifier create " + e.RemoteAddr.IP.String() + "<-" + e.LocalAddr.IP.String() + " = " + strconv.Itoa(int(binary.LittleEndian.Uint32(e.RemoteAddr.IP))) + "<-" + strconv.Itoa(int(binary.LittleEndian.Uint32(e.LocalAddr.IP))))
+		log.Printf("ConnectionIdentifier create " + e.RemoteAddr.IP.String() + "<-" + e.LocalAddr.IP.String() + " = " + strconv.Itoa(int(binary.LittleEndian.Uint32(e.RemoteAddr.IP.To4()))) + "<-" + strconv.Itoa(int(binary.LittleEndian.Uint32(e.LocalAddr.IP.To4()))))
 	}
 
 	return Probes{}, conns, nil
