@@ -65,8 +65,22 @@ func calcRoles(entries []SockHostEntry) ([]SockTabEntry, error) {
 		var localIPs = hostEntry.ipList
 		var localListens = make([]SockAddr, 0)
 
+		for i, _ := range hostEntry.ipList {
+			e := &hostEntry.ipList[i]
+			if e != nil {
+				ipv4Addr := hostEntry.ipList[i].To4()
+				if ipv4Addr != nil {
+					hostEntry.ipList[i] = ipv4Addr
+				}
+			}
+		}
+
 		for _, e := range hostEntry.sockTab {
 			if e.LocalAddr != nil && e.State.String() == "LISTEN" {
+				ipv4Addr := e.LocalAddr.IP.To4()
+				if ipv4Addr != nil {
+					e.LocalAddr.IP = ipv4Addr
+				}
 				if e.LocalAddr.IP.Equal(nullSockAddr.IP) {
 					for _, localIP := range localIPs {
 						localListens = append(localListens, SockAddr{IP: localIP, Port: e.LocalAddr.Port})
@@ -85,6 +99,14 @@ func calcRoles(entries []SockHostEntry) ([]SockTabEntry, error) {
 				continue
 			}
 			for _, localIpPort := range localListens {
+				ipv4Addr := e.LocalAddr.IP.To4()
+				if ipv4Addr != nil {
+					e.LocalAddr.IP = ipv4Addr
+				}
+				ipv4Addr = e.RemoteAddr.IP.To4()
+				if ipv4Addr != nil {
+					e.RemoteAddr.IP = ipv4Addr
+				}
 				var isSrcListens = localIpPort.Port == e.LocalAddr.Port && localIpPort.IP.Equal(e.LocalAddr.IP)
 				var isDstListens = localIpPort.Port == e.RemoteAddr.Port && localIpPort.IP.Equal(e.RemoteAddr.IP)
 				if isSrcListens || isDstListens {
