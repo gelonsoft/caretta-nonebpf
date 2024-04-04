@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strconv"
 )
 
 // SockAddr represents an ip:port pair
@@ -98,6 +99,7 @@ func calcRoles(entries []SockHostEntry) ([]SockTabEntry, error) {
 			if e.State.String() == "LISTEN" {
 				continue
 			}
+			e.LocalAddr.IP = net.ParseIP("::")
 			for _, localIpPort := range localListens {
 				ipv4Addr := e.LocalAddr.IP.To4()
 				if ipv4Addr != nil {
@@ -119,6 +121,10 @@ func calcRoles(entries []SockHostEntry) ([]SockTabEntry, error) {
 						//log.Printf("After swap entry role=" + strconv.Itoa(e.Role) + " for " + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)) + "->" + e.RemoteAddr.IP.String() + ":" + strconv.Itoa(int(e.RemoteAddr.Port)) + " cause listens " + localIpPort.IP.String() + ":" + strconv.Itoa(int(localIpPort.Port)))
 					} else {
 						//log.Printf("Changed role=" + strconv.Itoa(e.Role) + " for " + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)) + "->" + e.RemoteAddr.IP.String() + ":" + strconv.Itoa(int(e.RemoteAddr.Port)) + " cause listens " + localIpPort.IP.String() + ":" + strconv.Itoa(int(localIpPort.Port)))
+					}
+				} else {
+					if localIpPort.Port == e.LocalAddr.Port || localIpPort.Port == e.RemoteAddr.Port {
+						log.Printf("Debug compare for L=" + e.LocalAddr.IP.String() + ":" + strconv.Itoa(int(e.LocalAddr.Port)) + " and R=" + e.RemoteAddr.IP.String() + ":" + strconv.Itoa(int(e.RemoteAddr.Port)) + " <> listens " + localIpPort.IP.String() + ":" + strconv.Itoa(int(localIpPort.Port)))
 					}
 				}
 			}
